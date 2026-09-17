@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   THE LIGHT MUSIC INSTITUTE — Design tokens
+   Brand direction: warm stage-light gold against deep ink, on a soft cream
+   canvas. Premium and musical without leaning on literal note/clef iconography.
+   Headings use a serif for an editorial, "conservatory" feel; body uses a
+   clean humanist sans for readability across long lesson text.
+   ============================================================================ */
+
+:root {
+  /* Warm neutral ("ink") scale — replaces pure gray for a warmer premium feel */
+  --ink-25: #fbfaf8;
+  --ink-50: #f6f4f0;
+  --ink-100: #ece7de;
+  --ink-200: #d8cfc0;
+  --ink-300: #b7a890;
+  --ink-400: #93805f;
+  --ink-500: #6f5f45;
+  --ink-600: #564936;
+  --ink-700: #3c332a;
+  --ink-800: #262019;
+  --ink-900: #17130f;
+  --ink-950: #0d0b08;
+
+  /* Brand gold ("The Light") — primary accent, used sparingly and deliberately */
+  --gold-50: #fdf8ec;
+  --gold-100: #faedc9;
+  --gold-200: #f4da97;
+  --gold-300: #ecc25f;
+  --gold-400: #e3a936;
+  --gold-500: #d4901f;
+  --gold-600: #b17318;
+  --gold-700: #8a5717;
+  --gold-800: #6f4719;
+  --gold-900: #5c3c18;
+
+  /* Ember — secondary warm accent (wood/leather tone), used for highlights */
+  --ember-50: #fdf3ee;
+  --ember-100: #fbe1d3;
+  --ember-400: #d97a4a;
+  --ember-500: #c15f30;
+  --ember-600: #a24a24;
+
+  /* Semantic */
+  --success-500: #3f8b5c;
+  --success-100: #e3f2e8;
+  --warning-500: #c17c1f;
+  --warning-100: #faf0dd;
+  --danger-500: #c04435;
+  --danger-100: #f8e6e3;
+  --info-500: #3d6fa8;
+  --info-100: #e6eef7;
+
+  --background: var(--ink-25);
+  --foreground: var(--ink-900);
+
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+
+  --shadow-soft: 0 1px 2px rgba(23, 19, 15, 0.04), 0 8px 24px -12px rgba(23, 19, 15, 0.12);
+  --shadow-lifted: 0 4px 8px rgba(23, 19, 15, 0.06), 0 16px 40px -16px rgba(23, 19, 15, 0.22);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-ink-25: var(--ink-25);
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+  --color-ink-950: var(--ink-950);
+
+  --color-gold-50: var(--gold-50);
+  --color-gold-100: var(--gold-100);
+  --color-gold-200: var(--gold-200);
+  --color-gold-300: var(--gold-300);
+  --color-gold-400: var(--gold-400);
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+  --color-gold-800: var(--gold-800);
+  --color-gold-900: var(--gold-900);
+
+  --color-ember-50: var(--ember-50);
+  --color-ember-100: var(--ember-100);
+  --color-ember-400: var(--ember-400);
+  --color-ember-500: var(--ember-500);
+  --color-ember-600: var(--ember-600);
+
+  --color-success-500: var(--success-500);
+  --color-success-100: var(--success-100);
+  --color-warning-500: var(--warning-500);
+  --color-warning-100: var(--warning-100);
+  --color-danger-500: var(--danger-500);
+  --color-danger-100: var(--danger-100);
+  --color-info-500: var(--info-500);
+  --color-info-100: var(--info-100);
+
+  --font-display: "TLMI Display", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "TLMI Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
+
+  /* Admin console palette */
+  --color-canvas: #f7f4ef;
+  --color-surface: #ffffff;
+  --color-ink: #14100e;
+  --color-ink-soft: #3b342d;
+  --color-ink-muted: #7a7269;
+  --color-ink-faint: #a9a29a;
+  --color-line: #e8e2d8;
+  --color-line-strong: #d5ccbe;
+  --color-brass: #a9814f;
+  --color-brass-deep: #7c5a31;
+  --color-brass-soft: #f1e7d8;
+  --color-moss: #3f6b52;
+  --color-moss-soft: #e4eee7;
+  --color-clay: #b04a34;
+  --color-clay-soft: #f6e4df;
+  --shadow-card: 0 1px 2px rgba(20, 16, 14, 0.04), 0 16px 40px -28px rgba(20, 16, 14, 0.28);
+  --shadow-pop: 0 12px 32px -12px rgba(20, 16, 14, 0.24);
+  --font-display: "TLMI Display", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "TLMI Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  border-color: var(--ink-100);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--gold-200);
+  color: var(--ink-900);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reusable premium surface used by Card and elevated panels */
+.surface-card {
+  background: #ffffff;
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Subtle warm gradient used sparingly for hero/stat highlight panels —
+   evokes stage light without literal iconography */
+.surface-spotlight {
+  background: radial-gradient(120% 140% at 15% 0%, var(--gold-100) 0%, var(--ink-25) 55%);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

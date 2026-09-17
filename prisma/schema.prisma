@@ -1,0 +1,1022 @@
+// ============================================================================
+// THE LIGHT MUSIC INSTITUTE — DATABASE SCHEMA
+// Designed to be instrument-agnostic: Guitar today, Keyboard/Bass/Drums/
+// Voice/Theory tomorrow, without structural rewrites. Nothing below encodes
+// "guitar" as a first-class concept — instruments are DATA (see Instrument
+// model), and every content type (Course, Song, PracticeExercise, etc.)
+// hangs off an instrumentId.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// ENUMS
+// ----------------------------------------------------------------------------
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+  SUPER_ADMIN
+  CONTENT_MANAGER
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+  PENDING_VERIFICATION
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonContentType {
+  VIDEO
+  AUDIO
+  TEXT
+  PDF
+  IMAGE
+  CHORD_SHEET
+  TAB
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  PENDING_PAYMENT
+}
+
+enum SubmissionType {
+  VIDEO
+  AUDIO
+  TEXT
+  FILE
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  SUBMITTED
+  UNDER_REVIEW
+  PASSED
+  NEEDS_IMPROVEMENT
+  RESUBMISSION_REQUIRED
+}
+
+enum ClassFormat {
+  PHYSICAL
+  ONLINE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  FLUTTERWAVE
+}
+
+enum PaymentPurpose {
+  COURSE_PURCHASE
+  SUBSCRIPTION
+  TUITION
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum BillingInterval {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum NotificationType {
+  NEW_LESSON
+  ASSIGNMENT_CREATED
+  ASSIGNMENT_DUE
+  TEACHER_FEEDBACK
+  CLASS_REMINDER
+  PAYMENT_REMINDER
+  PAYMENT_SUCCESS
+  COURSE_COMPLETION
+  CERTIFICATE_READY
+  ANNOUNCEMENT
+}
+
+enum AnnouncementAudience {
+  ALL_STUDENTS
+  SPECIFIC_COURSE
+  SPECIFIC_LEVEL
+  SPECIFIC_TEACHER
+  SPECIFIC_STUDENT
+}
+
+enum StorageAssetType {
+  PROFILE_PICTURE
+  LESSON_VIDEO
+  LESSON_PDF
+  COURSE_RESOURCE
+  ASSIGNMENT_SUBMISSION
+  FEEDBACK_VIDEO
+  CERTIFICATE
+  AUDIO_FILE
+  BACKING_TRACK
+  ANNOUNCEMENT_IMAGE
+}
+
+enum UploadStatus {
+  PENDING
+  UPLOADED
+  FAILED
+  DELETED
+}
+
+// ----------------------------------------------------------------------------
+// IDENTITY & ACCESS
+// ----------------------------------------------------------------------------
+
+model User {
+  id                String        @id @default(uuid())
+  email             String        @unique
+  passwordHash      String
+  role              Role          @default(STUDENT)
+  status            AccountStatus @default(PENDING_VERIFICATION)
+  emailVerifiedAt   DateTime?
+  lastLoginAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+
+  profile           Profile?
+  studentProfile    StudentProfile?
+  teacherProfile    TeacherProfile?
+
+  sessions          Session[]
+  verificationTokens VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  notifications     Notification[]
+  auditLogs         AuditLog[]        @relation("AuditActor")
+
+  createdCourses    Course[]          @relation("CourseCreatedBy")
+  createdAnnouncements Announcement[] @relation("AnnouncementCreatedBy")
+
+  storageAssets     StorageAsset[]
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model Profile {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName    String
+  lastName     String
+  displayName  String?
+  phone        String?
+  dateOfBirth  DateTime?
+  gender       String?
+  country      String?
+  city         String?
+  timezone     String    @default("Africa/Lagos")
+  avatarAssetId String?  @unique
+  avatarAsset  StorageAsset? @relation("ProfileAvatar", fields: [avatarAssetId], references: [id])
+  bio          String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("profiles")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// Student-specific profile data (onboarding, goals, streaks summary)
+model StudentProfile {
+  id                   String     @id @default(uuid())
+  userId               String     @unique
+  user                 User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primaryInstrumentId  String?
+  primaryInstrument    Instrument? @relation(fields: [primaryInstrumentId], references: [id])
+  experienceLevel      SkillLevel?
+  learningGoals        String[]   @default([])
+  preferredLearningStyle String?
+  onboardingCompletedAt DateTime?
+  currentPracticeStreak Int       @default(0)
+  longestPracticeStreak Int       @default(0)
+  lastPracticeDate      DateTime?
+  totalPracticeSeconds  Int       @default(0)
+  assignedTeacherId     String?
+  assignedTeacher       TeacherProfile? @relation("TeacherStudents", fields: [assignedTeacherId], references: [id])
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  enrollments          Enrollment[]
+  lessonProgress       LessonProgress[]
+  submissions          AssignmentSubmission[]
+  practiceSessions     PracticeSession[]
+  classEnrollments     ClassEnrollment[]
+  attendanceRecords    Attendance[]
+  payments             Payment[]
+  subscriptions        Subscription[]
+  achievements         StudentAchievement[]
+  certificates         Certificate[]
+
+  @@index([assignedTeacherId])
+  @@map("student_profiles")
+}
+
+model TeacherProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline      String?
+  bio           String?
+  yearsExperience Int?
+  specialties   String[] @default([]) // e.g. ["Fingerstyle", "Worship Guitar"]
+  isAvailable   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  instruments   TeacherInstrument[]
+  courses       Course[]            @relation("CourseInstructor")
+  students      StudentProfile[]    @relation("TeacherStudents")
+  assignments   Assignment[]        @relation("AssignmentCreatedBy")
+  feedback      Feedback[]          @relation("FeedbackByTeacher")
+  classes       Class[]             @relation("ClassTeacher")
+  availability  TeacherAvailability[]
+
+  @@map("teacher_profiles")
+}
+
+model TeacherAvailability {
+  id         String   @id @default(uuid())
+  teacherId  String
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  dayOfWeek  Int      // 0 = Sunday .. 6 = Saturday
+  startTime  String   // "16:00"
+  endTime    String   // "18:00"
+  createdAt  DateTime @default(now())
+
+  @@index([teacherId])
+  @@map("teacher_availability")
+}
+
+model TeacherInstrument {
+  id           String     @id @default(uuid())
+  teacherId    String
+  teacher      TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  instrumentId String
+  instrument   Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, instrumentId])
+  @@map("teacher_instruments")
+}
+
+// ----------------------------------------------------------------------------
+// CURRICULUM HIERARCHY (instrument-agnostic)
+// Instrument -> Level -> Course -> CourseModule -> Lesson
+// ----------------------------------------------------------------------------
+
+model Instrument {
+  id          String   @id @default(uuid())
+  slug        String   @unique // "guitar", "keyboard", "bass", "drums", "voice", "theory"
+  name        String
+  description String?
+  iconKey     String?  // maps to a lucide icon name or asset key, not hardcoded UI
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses           Course[]
+  songs             Song[]
+  practiceExercises PracticeExercise[]
+  chordShapes       ChordShape[]
+  scaleDefinitions  ScaleDefinition[]
+  teacherInstruments TeacherInstrument[]
+  studentProfiles   StudentProfile[]
+  tunings           TuningPreset[]
+
+  @@map("instruments")
+}
+
+model Course {
+  id                String        @id @default(uuid())
+  slug              String        @unique
+  title             String
+  description       String
+  thumbnailAssetId  String?
+  thumbnailAsset    StorageAsset? @relation("CourseThumbnail", fields: [thumbnailAssetId], references: [id])
+  instrumentId      String
+  instrument        Instrument    @relation(fields: [instrumentId], references: [id])
+  level             SkillLevel
+  instructorId      String?
+  instructor        TeacherProfile? @relation("CourseInstructor", fields: [instructorId], references: [id])
+  durationMinutes   Int           @default(0)
+  priceMinor        Int           @default(0) // stored in minor currency unit (kobo/cents)
+  currency          String        @default("NGN")
+  requirements       String[]     @default([])
+  learningObjectives String[]     @default([])
+  status            ContentStatus @default(DRAFT)
+  publishedAt       DateTime?
+  createdById       String?
+  createdBy         User?         @relation("CourseCreatedBy", fields: [createdById], references: [id])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+
+  modules       CourseModule[]
+  enrollments   Enrollment[]
+  classes       Class[]
+  certificates  Certificate[]
+  announcements Announcement[]
+
+  @@index([instrumentId, level, status])
+  @@map("courses")
+}
+
+model CourseModule {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  description String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons   Lesson[]
+
+  @@index([courseId, sortOrder])
+  @@map("course_modules")
+}
+
+model Lesson {
+  id               String   @id @default(uuid())
+  moduleId         String
+  module           CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title            String
+  summary          String?
+  textContent      String?  // rich text / markdown body
+  practiceInstructions String?
+  teacherNotes     String?  // visible to teachers only
+  videoAssetId     String?  @unique
+  videoAsset       StorageAsset? @relation("LessonVideo", fields: [videoAssetId], references: [id])
+  audioAssetId     String?  @unique
+  audioAsset       StorageAsset? @relation("LessonAudio", fields: [audioAssetId], references: [id])
+  durationSeconds  Int?
+  sortOrder        Int      @default(0)
+  status           ContentStatus @default(DRAFT)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  resources        LessonResource[]
+  progress         LessonProgress[]
+  assignments      Assignment[]
+
+  @@index([moduleId, sortOrder])
+  @@map("lessons")
+}
+
+model LessonResource {
+  id        String            @id @default(uuid())
+  lessonId  String
+  lesson    Lesson            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title     String
+  type      LessonContentType
+  assetId   String            @unique
+  asset     StorageAsset      @relation("LessonResourceAsset", fields: [assetId], references: [id])
+  sortOrder Int               @default(0)
+  createdAt DateTime          @default(now())
+
+  @@index([lessonId])
+  @@map("lesson_resources")
+}
+
+// ----------------------------------------------------------------------------
+// ENROLLMENT & PROGRESS
+// ----------------------------------------------------------------------------
+
+model Enrollment {
+  id             String           @id @default(uuid())
+  studentId      String
+  student        StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status         EnrollmentStatus @default(PENDING_PAYMENT)
+  enrolledAt     DateTime         @default(now())
+  completedAt    DateTime?
+  progressPercent Int             @default(0) // derived/cached; recomputed by progress engine
+  paymentId      String?          @unique
+  payment        Payment?         @relation(fields: [paymentId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([studentId, courseId])
+  @@index([courseId, status])
+  @@map("enrollments")
+}
+
+model LessonProgress {
+  id                 String               @id @default(uuid())
+  studentId          String
+  student            StudentProfile       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonId           String
+  lesson             Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  status             LessonProgressStatus @default(NOT_STARTED)
+  watchPercent       Int                  @default(0)
+  lastPositionSeconds Int                 @default(0)
+  startedAt          DateTime?
+  completedAt        DateTime?
+  updatedAt          DateTime             @updatedAt
+
+  @@unique([studentId, lessonId])
+  @@index([lessonId])
+  @@map("lesson_progress")
+}
+
+// ----------------------------------------------------------------------------
+// ASSIGNMENTS & ASSESSMENT
+// ----------------------------------------------------------------------------
+
+model Assignment {
+  id               String         @id @default(uuid())
+  lessonId         String?
+  lesson           Lesson?        @relation(fields: [lessonId], references: [id])
+  courseId         String
+  course           Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdById      String
+  createdBy        TeacherProfile @relation("AssignmentCreatedBy", fields: [createdById], references: [id])
+  title            String
+  description      String
+  instructions     String
+  dueDate          DateTime?
+  submissionType   SubmissionType
+  maxAttempts      Int            @default(1)
+  gradingCriteria  String?
+  status           ContentStatus  @default(PUBLISHED)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  submissions      AssignmentSubmission[]
+
+  @@index([courseId])
+  @@index([lessonId])
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id            String            @id @default(uuid())
+  assignmentId  String
+  assignment    Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attemptNumber Int               @default(1)
+  status        SubmissionStatus  @default(NOT_STARTED)
+  textResponse  String?
+  assetId       String?           @unique
+  asset         StorageAsset?     @relation("SubmissionAsset", fields: [assetId], references: [id])
+  score         Int?
+  submittedAt   DateTime?
+  reviewedAt    DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  feedback      Feedback[]
+
+  @@index([assignmentId, studentId])
+  @@map("assignment_submissions")
+}
+
+model Feedback {
+  id              String   @id @default(uuid())
+  submissionId    String
+  submission      AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  teacherId       String
+  teacher         TeacherProfile @relation("FeedbackByTeacher", fields: [teacherId], references: [id])
+  writtenFeedback String?
+  feedbackVideoAssetId String? @unique
+  feedbackVideoAsset StorageAsset? @relation("FeedbackVideo", fields: [feedbackVideoAssetId], references: [id])
+  score           Int?
+  decision        SubmissionStatus // PASSED | NEEDS_IMPROVEMENT | RESUBMISSION_REQUIRED
+  createdAt       DateTime @default(now())
+
+  timestampedComments FeedbackComment[]
+
+  @@index([submissionId])
+  @@map("feedback")
+}
+
+// Timestamped comments on a student's performance video, e.g. "00:17 - timing issue"
+model FeedbackComment {
+  id             String   @id @default(uuid())
+  feedbackId     String
+  feedback       Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  timestampSeconds Int
+  comment        String
+  createdAt      DateTime @default(now())
+
+  @@index([feedbackId])
+  @@map("feedback_comments")
+}
+
+// ----------------------------------------------------------------------------
+// PRACTICE SYSTEM
+// ----------------------------------------------------------------------------
+
+model PracticeExercise {
+  id           String     @id @default(uuid())
+  instrumentId String
+  instrument   Instrument @relation(fields: [instrumentId], references: [id])
+  title        String
+  description  String?
+  difficulty   SkillLevel @default(BEGINNER)
+  createdAt    DateTime   @default(now())
+
+  practiceSessions PracticeSession[]
+
+  @@index([instrumentId])
+  @@map("practice_exercises")
+}
+
+model PracticeSession {
+  id            String    @id @default(uuid())
+  studentId     String
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  exerciseId    String?
+  exercise      PracticeExercise? @relation(fields: [exerciseId], references: [id])
+  courseId      String?
+  toolUsed      String?   // "tuner" | "metronome" | "fretboard" | "backing_track" | "free_practice"
+  startedAt     DateTime
+  endedAt       DateTime
+  durationSeconds Int
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  @@index([studentId, startedAt])
+  @@map("practice_sessions")
+}
+
+// ----------------------------------------------------------------------------
+// MUSIC TOOLS: TUNINGS, CHORDS, SCALES (instrument-agnostic, DB-driven)
+// ----------------------------------------------------------------------------
+
+model TuningPreset {
+  id           String     @id @default(uuid())
+  instrumentId String
+  instrument   Instrument @relation(fields: [instrumentId], references: [id])
+  name         String     // "Standard", "Drop D", "DADGAD", "Open G", "Open D", "Half Step Down"
+  notes        String[]   // e.g. ["E2","A2","D3","G3","B3","E4"] low to high
+  isDefault    Boolean    @default(false)
+
+  @@unique([instrumentId, name])
+  @@map("tuning_presets")
+}
+
+model ChordShape {
+  id           String     @id @default(uuid())
+  instrumentId String
+  instrument   Instrument @relation(fields: [instrumentId], references: [id])
+  rootNote     String     // "C", "C#", "D" ...
+  quality      String     // "major","minor","7","maj7","min7","sus2","sus4","dim","aug","add9", etc.
+  displayName  String     // "C Major"
+  positions    Json       // fret/finger positions, shape-specific structure
+  notes        String[]   // resulting note names
+  audioAssetId String?    @unique
+  audioAsset   StorageAsset? @relation("ChordAudio", fields: [audioAssetId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  songChords   SongChord[]
+
+  @@unique([instrumentId, rootNote, quality])
+  @@index([instrumentId])
+  @@map("chord_shapes")
+}
+
+model ScaleDefinition {
+  id            String     @id @default(uuid())
+  instrumentId  String
+  instrument    Instrument @relation(fields: [instrumentId], references: [id])
+  name          String     // "Major", "Minor Pentatonic", "Dorian", "Harmonic Minor" ...
+  formula       String     // e.g. "1-2-3-4-5-6-7" or "1-b3-4-5-b7"
+  description   String?
+  practicePattern String?
+  createdAt     DateTime   @default(now())
+
+  @@unique([instrumentId, name])
+  @@map("scale_definitions")
+}
+
+// ----------------------------------------------------------------------------
+// SONG LIBRARY
+// ----------------------------------------------------------------------------
+
+model Song {
+  id               String     @id @default(uuid())
+  instrumentId     String
+  instrument       Instrument @relation(fields: [instrumentId], references: [id])
+  title            String
+  artist           String
+  genre            String
+  difficulty       SkillLevel
+  musicalKey       String
+  bpm              Int?
+  strummingPattern String?
+  guitarPart       String?
+  numberSystem     String?    // Nashville number system notation, if applicable
+  tutorialAssetId  String?    @unique
+  tutorialAsset    StorageAsset? @relation("SongTutorial", fields: [tutorialAssetId], references: [id])
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  chords           SongChord[]
+  backingTracks    BackingTrack[]
+
+  @@index([instrumentId, genre, difficulty])
+  @@map("songs")
+}
+
+model SongChord {
+  id       String     @id @default(uuid())
+  songId   String
+  song     Song       @relation(fields: [songId], references: [id], onDelete: Cascade)
+  chordId  String
+  chord    ChordShape @relation(fields: [chordId], references: [id])
+  sortOrder Int       @default(0)
+
+  @@index([songId])
+  @@map("song_chords")
+}
+
+model BackingTrack {
+  id           String   @id @default(uuid())
+  songId       String
+  song         Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  title        String
+  bpm          Int?
+  assetId      String   @unique
+  asset        StorageAsset @relation("BackingTrackAsset", fields: [assetId], references: [id])
+  sections     Json?    // e.g. [{ "label": "Verse", "startSeconds": 0 }, ...]
+  createdAt    DateTime @default(now())
+
+  @@map("backing_tracks")
+}
+
+// ----------------------------------------------------------------------------
+// SCHEDULING & ATTENDANCE
+// ----------------------------------------------------------------------------
+
+model Class {
+  id              String      @id @default(uuid())
+  title           String
+  courseId        String?
+  course          Course?     @relation(fields: [courseId], references: [id])
+  teacherId       String
+  teacher         TeacherProfile @relation("ClassTeacher", fields: [teacherId], references: [id])
+  format          ClassFormat
+  startTime       DateTime
+  endTime         DateTime
+  location        String?     // for PHYSICAL
+  meetingLink     String?     // for ONLINE (Zoom/Meet)
+  capacity        Int         @default(10)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  enrollments     ClassEnrollment[]
+  attendance      Attendance[]
+
+  @@index([teacherId, startTime])
+  @@map("classes")
+}
+
+model ClassEnrollment {
+  id        String   @id @default(uuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([classId, studentId])
+  @@map("class_enrollments")
+}
+
+model Attendance {
+  id        String           @id @default(uuid())
+  classId   String
+  class     Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  studentId String
+  student   StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status    AttendanceStatus
+  markedAt  DateTime         @default(now())
+
+  @@unique([classId, studentId])
+  @@map("attendance")
+}
+
+// ----------------------------------------------------------------------------
+// PAYMENTS & SUBSCRIPTIONS
+// ----------------------------------------------------------------------------
+
+model PaymentPlan {
+  id             String          @id @default(uuid())
+  name           String          // "Monthly Tuition - Guitar Beginner"
+  description    String?
+  amountMinor    Int
+  currency       String          @default("NGN")
+  billingInterval BillingInterval
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+
+  subscriptions  Subscription[]
+
+  @@map("payment_plans")
+}
+
+model Payment {
+  id              String          @id @default(uuid())
+  studentId       String
+  student         StudentProfile  @relation(fields: [studentId], references: [id])
+  purpose         PaymentPurpose
+  provider        PaymentProvider
+  providerReference String        @unique // reference returned by Paystack/Flutterwave
+  idempotencyKey  String          @unique
+  amountMinor     Int
+  currency        String          @default("NGN")
+  status          PaymentStatus   @default(PENDING)
+  metadata        Json?
+  verifiedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  enrollment      Enrollment?
+  receipt         Receipt?
+  subscription    Subscription?   @relation("SubscriptionPayments", fields: [subscriptionId], references: [id])
+  subscriptionId  String?
+
+  @@index([studentId, status])
+  @@map("payments")
+}
+
+model Subscription {
+  id             String   @id @default(uuid())
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id])
+  planId         String
+  plan           PaymentPlan @relation(fields: [planId], references: [id])
+  status         SubscriptionStatus @default(ACTIVE)
+  provider       PaymentProvider
+  providerSubscriptionId String? @unique
+  startDate      DateTime @default(now())
+  nextBillingDate DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  payments       Payment[] @relation("SubscriptionPayments")
+
+  @@index([studentId, status])
+  @@map("subscriptions")
+}
+
+model Receipt {
+  id             String   @id @default(uuid())
+  paymentId      String   @unique
+  payment        Payment  @relation(fields: [paymentId], references: [id])
+  receiptNumber  String   @unique
+  issuedAt       DateTime @default(now())
+  pdfAssetId     String?  @unique
+  pdfAsset       StorageAsset? @relation("ReceiptPdf", fields: [pdfAssetId], references: [id])
+
+  @@map("receipts")
+}
+
+// ----------------------------------------------------------------------------
+// GAMIFICATION: ACHIEVEMENTS & CERTIFICATES
+// ----------------------------------------------------------------------------
+
+model Achievement {
+  id          String   @id @default(uuid())
+  key         String   @unique // "FIRST_LESSON", "PRACTICE_STREAK_7"
+  title       String
+  description String
+  iconKey     String?
+  criteria    Json     // machine-evaluable criteria definition, admin-editable
+  createdAt   DateTime @default(now())
+
+  studentAchievements StudentAchievement[]
+
+  @@map("achievements")
+}
+
+model StudentAchievement {
+  id            String      @id @default(uuid())
+  studentId     String
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  earnedAt      DateTime    @default(now())
+
+  @@unique([studentId, achievementId])
+  @@map("student_achievements")
+}
+
+model Certificate {
+  id                String   @id @default(uuid())
+  certificateNumber String   @unique // "TLMI-GTR-000184"
+  studentId         String
+  student           StudentProfile @relation(fields: [studentId], references: [id])
+  courseId          String
+  course            Course   @relation(fields: [courseId], references: [id])
+  issuedAt          DateTime @default(now())
+  pdfAssetId        String?  @unique
+  pdfAsset          StorageAsset? @relation("CertificatePdf", fields: [pdfAssetId], references: [id])
+  verificationCode  String   @unique
+
+  @@index([studentId])
+  @@map("certificates")
+}
+
+// ----------------------------------------------------------------------------
+// NOTIFICATIONS & ANNOUNCEMENTS
+// ----------------------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model Announcement {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  imageAssetId String?  @unique
+  imageAsset   StorageAsset? @relation("AnnouncementImage", fields: [imageAssetId], references: [id])
+  audience     AnnouncementAudience @default(ALL_STUDENTS)
+  courseId     String?
+  course       Course?  @relation(fields: [courseId], references: [id])
+  targetLevel  SkillLevel?
+  targetTeacherId String?
+  targetStudentId String?
+  publishAt    DateTime @default(now())
+  expiresAt    DateTime?
+  createdById  String
+  createdBy    User     @relation("AnnouncementCreatedBy", fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([audience, publishAt])
+  @@map("announcements")
+}
+
+// ----------------------------------------------------------------------------
+// STORAGE ABSTRACTION
+// One table backs every uploaded asset regardless of type or provider, so the
+// storage layer (see src/lib/storage) can point at S3, R2, or any
+// S3-compatible provider purely through env configuration.
+// ----------------------------------------------------------------------------
+
+model StorageAsset {
+  id             String           @id @default(uuid())
+  type           StorageAssetType
+  provider       String           @default("s3") // "s3" | "local" (dev fallback)
+  bucket         String
+  objectKey      String           @unique
+  originalFilename String?
+  mimeType       String
+  sizeBytes      Int
+  status         UploadStatus     @default(PENDING)
+  ownerId        String
+  owner          User             @relation(fields: [ownerId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  profileAvatarOf     Profile?     @relation("ProfileAvatar")
+  courseThumbnailOf   Course[]     @relation("CourseThumbnail")
+  lessonVideoOf       Lesson?      @relation("LessonVideo")
+  lessonAudioOf       Lesson?      @relation("LessonAudio")
+  lessonResourceOf    LessonResource? @relation("LessonResourceAsset")
+  submissionOf        AssignmentSubmission? @relation("SubmissionAsset")
+  feedbackVideoOf     Feedback?    @relation("FeedbackVideo")
+  chordAudioOf        ChordShape?  @relation("ChordAudio")
+  songTutorialOf      Song?        @relation("SongTutorial")
+  backingTrackOf      BackingTrack? @relation("BackingTrackAsset")
+  receiptPdfOf        Receipt?     @relation("ReceiptPdf")
+  certificatePdfOf    Certificate? @relation("CertificatePdf")
+  announcementImageOf Announcement? @relation("AnnouncementImage")
+
+  @@index([ownerId])
+  @@index([type])
+  @@map("storage_assets")
+}
+
+// ----------------------------------------------------------------------------
+// AUDIT LOG
+// ----------------------------------------------------------------------------
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String?
+  actor        User?    @relation("AuditActor", fields: [actorId], references: [id])
+  action       String   // "COURSE_PUBLISHED", "STUDENT_SUSPENDED", etc.
+  resourceType String   // "Course", "User", "Payment" ...
+  resourceId   String?
+  metadata     Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
