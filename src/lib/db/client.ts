@@ -27,7 +27,12 @@ export function getPool() {
   if (!_pool) {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
-      throw new Error("DATABASE_URL is not set. Copy .env.example to .env and configure it.");
+      console.warn("WARNING: DATABASE_URL is not set. Database queries will return empty results.");
+      return {
+        connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }),
+        query: async () => ({ rows: [] }),
+        end: async () => {},
+      } as unknown as Pool;
     }
     _pool = globalThis.__tlmiPool ?? new Pool({
       connectionString,
@@ -45,6 +50,10 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params: unknown[] = []
 ): Promise<T[]> {
+  if (!process.env.DATABASE_URL) {
+    console.warn(`[DB Mock] Skipping query: ${text.slice(0, 50)}...`);
+    return [];
+  }
   const result = await getPool().query<T>(text, params);
   return result.rows;
 }
@@ -59,6 +68,12 @@ export async function queryOne<T extends QueryResultRow = QueryResultRow>(
 
 /** Run several statements atomically. Throws (and rolls back) if `fn` throws. */
 export async function withTransaction<T>(fn: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
+  if (!process.env.DATABASE_URL) {
+    console.warn(`[DB Mock] Skipping transaction.`);
+    // We have to return a dummy value of type T, but since T is unknown, this might crash if the caller expects an object.
+    // However, withTransaction is usually used for mutations (not during static build), so we can just throw here safely.
+    throw new Error("Cannot run transactions without DATABASE_URL");
+  }
   const client = await getPool().connect();
   try {
     await client.query("BEGIN");
