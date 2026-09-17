@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ============================================================================
@@ -63,6 +64,18 @@
 }
 
 @theme inline {
+  --color-marketing-ink: #1B1714;
+  --color-marketing-bark: #4A3F35;
+  --color-marketing-stone: #7A6E60;
+  --color-marketing-cream: #FBF7EF;
+  --color-marketing-parchment: #F3EADA;
+  --color-marketing-rule: #E3D8C4;
+  --color-marketing-gold: #B8863B;
+  --color-marketing-forest: #1F4A45;
+  
+  --font-marketing-display: 'Fraunces', Georgia, serif;
+  --font-marketing-sans: 'Inter', system-ui, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
