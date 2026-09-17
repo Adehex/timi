@@ -16,7 +16,7 @@ import { getStudentDashboardData } from "../src/lib/db/repositories/dashboard";
 import { listAssignedStudents, listPendingSubmissionsForTeacher, getTeacherProfileByUserId } from "../src/lib/db/repositories/teacher";
 import { getAdminOverviewStats } from "../src/lib/db/repositories/admin";
 import { verifyCertificate } from "../src/lib/db/repositories/certificates";
-import { pool } from "../src/lib/db/client";
+import { getPool } from "../src/lib/db/client";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`ASSERTION FAILED: ${message}`);
@@ -92,5 +92,5 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await pool.end();
+    await getPool().end();
   });
