@@ -38,7 +38,7 @@ export function MarketingHeader() {
               Log in
             </Link>
           </nav>
-          <Button asChild className="bg-[#21433d] text-white hover:bg-[#1a3530]" size="md">
+          <Button asChild size="md">
             <Link href="/register">Start learning</Link>
           </Button>
         </div>
