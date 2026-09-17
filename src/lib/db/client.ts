@@ -21,28 +21,31 @@ declare global {
   var __tlmiPool: Pool | undefined;
 }
 
-function createPool() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error("DATABASE_URL is not set. Copy .env.example to .env and configure it.");
-  }
-  return new Pool({
-    connectionString,
-    max: 10,
-    idleTimeoutMillis: 30_000,
-  });
-}
+let _pool: Pool | undefined;
 
-export const pool = globalThis.__tlmiPool ?? createPool();
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__tlmiPool = pool;
+export function getPool() {
+  if (!_pool) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error("DATABASE_URL is not set. Copy .env.example to .env and configure it.");
+    }
+    _pool = globalThis.__tlmiPool ?? new Pool({
+      connectionString,
+      max: 10,
+      idleTimeoutMillis: 30_000,
+    });
+    if (process.env.NODE_ENV !== "production") {
+      globalThis.__tlmiPool = _pool;
+    }
+  }
+  return _pool;
 }
 
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params: unknown[] = []
 ): Promise<T[]> {
-  const result = await pool.query<T>(text, params);
+  const result = await getPool().query<T>(text, params);
   return result.rows;
 }
 
@@ -56,7 +59,7 @@ export async function queryOne<T extends QueryResultRow = QueryResultRow>(
 
 /** Run several statements atomically. Throws (and rolls back) if `fn` throws. */
 export async function withTransaction<T>(fn: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     await client.query("BEGIN");
     const result = await fn(client);
