@@ -4,10 +4,12 @@ import Link from "next/link";
 import { AnimatePresence, motion } from 'framer-motion';
 import { MenuIcon, XIcon } from 'lucide-react';
 import { navItems } from '@/lib/marketing-data/navigation';
+import { LoginModal } from '@/components/auth/LoginModal';
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -64,12 +66,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-4">
-          <Link
-            href="/login"
+          <button
+            onClick={() => setLoginModalOpen(true)}
             className="hidden rounded-sm px-2 py-2 text-[14px] text-marketing-bark transition-colors duration-150 ease-out hover:text-marketing-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-forest sm:block">
             
             Log in
-          </Link>
+          </button>
           <Link
             href="/register"
             className="whitespace-nowrap rounded-[4px] bg-marketing-forest px-4 py-2.5 text-[14px] font-medium text-marketing-cream transition-colors duration-150 ease-out hover:bg-marketing-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2 focus-visible:ring-offset-cream">
@@ -109,13 +111,14 @@ export function SiteHeader() {
                   {item.label}
                 </Link>
             )}
-              <Link href="/login" className="py-3.5 text-[14px] text-marketing-bark sm:hidden">
+              <button onClick={() => { setMobileOpen(false); setLoginModalOpen(true); }} className="py-3.5 text-[14px] text-marketing-bark sm:hidden text-left">
                 Log in
-              </Link>
+              </button>
             </nav>
           </motion.div>
         }
       </AnimatePresence>
-    </header>);
 
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
+    </header>);
 }
