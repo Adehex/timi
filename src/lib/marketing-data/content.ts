@@ -31,13 +31,13 @@ export const courseLevels: CourseLevel[] = [
   level: 'Beginner',
   title: 'Guitar Fundamentals',
   detail: 'Posture, tuning, open chords, and your first full song.',
-  modules: '3 modules'
+  modules: '8 modules'
 },
 {
   level: 'Intermediate',
   title: 'Rhythm & Chord Craft',
   detail: 'Barre chords, strumming patterns, and playing in time.',
-  modules: '5 modules'
+  modules: '8 modules'
 },
 {
   level: 'Advanced',
