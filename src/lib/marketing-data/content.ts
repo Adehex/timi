@@ -28,22 +28,22 @@ export interface CourseLevel {
 
 export const courseLevels: CourseLevel[] = [
 {
-  level: 'Level 1',
+  level: 'Beginner',
   title: 'Guitar Fundamentals',
   detail: 'Posture, tuning, open chords, and your first full song.',
-  modules: '6 modules · 24 lessons'
+  modules: '3 modules'
 },
 {
-  level: 'Level 2',
+  level: 'Intermediate',
   title: 'Rhythm & Chord Craft',
   detail: 'Barre chords, strumming patterns, and playing in time.',
-  modules: '7 modules · 31 lessons'
+  modules: '5 modules'
 },
 {
-  level: 'Level 3',
+  level: 'Advanced',
   title: 'Lead & Improvisation',
   detail: 'Scales across the fretboard, phrasing, and soloing.',
-  modules: '8 modules · 36 lessons'
+  modules: 'Many more modules'
 }];
 
 

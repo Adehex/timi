@@ -52,7 +52,6 @@ export function Courses() {
                 <span className="w-16 flex-none font-marketing-display text-[14px] text-marketing-gold">{course.level}</span>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-marketing-display text-[22px] font-medium text-marketing-ink lg:text-2xl">{course.title}</h3>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-marketing-bark">{course.detail}</p>
                   <p className="mt-2 text-[13px] text-marketing-stone">{course.modules}</p>
                 </div>
                 <span className="flex items-center gap-1.5 self-start rounded-full border border-marketing-rule px-2.5 py-1 text-[12px] text-marketing-stone">

@@ -18,7 +18,7 @@ import { Pool, type QueryResultRow } from "pg";
  */
 
 declare global {
-  var __tlmiPool: Pool | undefined;
+  var __tlmiPool5: Pool | undefined;
 }
 
 let _pool: Pool | undefined;
@@ -34,13 +34,24 @@ export function getPool() {
         end: async () => {},
       } as unknown as Pool;
     }
-    _pool = globalThis.__tlmiPool ?? new Pool({
-      connectionString,
+    let cleanConnectionString = connectionString;
+    try {
+      const url = new URL(connectionString);
+      url.searchParams.delete("sslmode");
+      url.searchParams.delete("ssl");
+      cleanConnectionString = url.toString();
+    } catch {
+      // ignore
+    }
+
+    _pool = globalThis.__tlmiPool5 ?? new Pool({
+      connectionString: cleanConnectionString,
       max: 10,
       idleTimeoutMillis: 30_000,
+      ssl: { rejectUnauthorized: false },
     });
     if (process.env.NODE_ENV !== "production") {
-      globalThis.__tlmiPool = _pool;
+      globalThis.__tlmiPool5 = _pool;
     }
   }
   return _pool;
