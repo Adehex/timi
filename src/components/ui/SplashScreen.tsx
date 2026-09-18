@@ -10,11 +10,14 @@ export function SplashScreen() {
   useEffect(() => {
     if (showSplash) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('is-splashing');
     } else {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('is-splashing');
     }
     return () => {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('is-splashing');
     };
   }, [showSplash]);
 

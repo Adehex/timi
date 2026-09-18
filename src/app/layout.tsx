@@ -9,11 +9,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "TLMI Learning | Skills that keep the presses running.",
-    template: "%s | TLMI Learning",
+    default: "The Light Music Institute | Learn Music. Build Skill. Find Your Sound.",
+    template: "%s | The Light Music Institute",
   },
   description:
-    "TLMI is a premium digital academy offering structured courses, live feedback from industry experts, and certification for the tag and label manufacturing industry.",
+    "TLMI is a premium digital music academy offering structured guitar courses, live feedback from real teachers, practice tools, and certification — built to grow into keyboard, bass, drums, voice, and theory.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
 };
 

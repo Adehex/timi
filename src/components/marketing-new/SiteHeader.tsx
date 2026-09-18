@@ -46,14 +46,14 @@ function SiteHeaderInner() {
           className="group flex items-center gap-3 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-4 focus-visible:ring-offset-cream">
           
           <Image src="/logo.jpg" alt="TLMI Logo" width={36} height={36} className="rounded-sm object-cover" />
-          <span className="flex items-baseline gap-3">
+          <span className="flex items-baseline gap-3 transition-opacity duration-500 [.is-splashing_&]:opacity-0">
             <span className="font-marketing-display text-xl font-semibold tracking-tightest text-marketing-ink">TLMI</span>
             <span className="hidden h-4 w-px bg-marketing-rule lg:block" aria-hidden="true" />
             <span className="hidden text-[13px] leading-none text-marketing-stone lg:block">The Light Music Institute</span>
           </span>
         </Link>
 
-        <nav aria-label="Main" className="ml-auto hidden items-center gap-1 md:flex">
+        <nav aria-label="Main" className="ml-auto hidden items-center gap-1 md:flex transition-opacity duration-500 [.is-splashing_&]:opacity-0 [.is-splashing_&]:pointer-events-none">
           {navItems.map((item) =>
           <Link
             key={item.label}
@@ -69,7 +69,7 @@ function SiteHeaderInner() {
           )}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-4">
+        <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-4 transition-opacity duration-500 [.is-splashing_&]:opacity-0 [.is-splashing_&]:pointer-events-none">
           <button
             onClick={openLogin}
             className="hidden rounded-sm px-2 py-2 text-[14px] text-marketing-bark transition-colors duration-150 ease-out hover:text-marketing-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-forest sm:block">

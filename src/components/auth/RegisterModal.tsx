@@ -43,18 +43,18 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
             </div>
 
             <h2 className="font-marketing-display text-[32px] lg:text-[42px] font-semibold leading-[1.05] tracking-tightest mb-4">
-              Skills that keep the<br />presses running.
+              Learn music.<br />Find your sound.
             </h2>
             <p className="text-marketing-cream/80 text-[14px] lg:text-[15px] max-w-[90%] mb-8 leading-relaxed">
-              Training built by and for the label and packaging industry — from press fundamentals to sustainability compliance.
+              Join thousands of students mastering their instruments with structured courses and live feedback from real teachers.
             </p>
 
             <blockquote className="border-l-2 border-[#d49e39] pl-5">
               <p className="font-marketing-display italic text-base lg:text-lg leading-[1.3] mb-2">
-                “The flexo fundamentals track got two of my new press operators production-ready in a month.”
+                “The curriculum is structured beautifully. I finally understand the fretboard instead of just memorizing shapes.”
               </p>
               <footer className="text-[11px] lg:text-[12px] text-marketing-cream/60 font-marketing-sans">
-                Dana Whitfield · Plant Manager, Northline Label Co.
+                Marcus T. · Guitar Fundamentals Student
               </footer>
             </blockquote>
           </div>
@@ -179,7 +179,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-[11px] text-marketing-stone/60">
-              <span>© {new Date().getFullYear()} Tag & Label Manufacturers Institute</span>
+              <span>© {new Date().getFullYear()} The Light Music Institute</span>
               <Link href="/privacy" className="hover:text-marketing-ink">Privacy</Link>
               <Link href="/terms" className="hover:text-marketing-ink">Terms</Link>
             </div>
