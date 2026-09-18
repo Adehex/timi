@@ -22,7 +22,7 @@ export function SiteFooter() {
           <div className="col-span-2 sm:col-span-1">
             <p className="font-marketing-display text-lg font-semibold tracking-tightest text-marketing-ink">TLMI</p>
             <p className="mt-2 max-w-[14rem] text-[14px] leading-relaxed text-marketing-stone">
-              The Light Music Institute — learn music, build skill, find your sound.
+              Tag & Label Manufacturers Institute — skills that keep the presses running.
             </p>
           </div>
 
@@ -32,8 +32,8 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-12 flex flex-col gap-2 border-t border-marketing-rule pt-6 text-[13px] text-marketing-stone sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} The Light Music Institute. All rights reserved.</p>
-          <p>Lagos, Nigeria · Online worldwide</p>
+          <p>© {new Date().getFullYear()} Tag & Label Manufacturers Institute. All rights reserved.</p>
+          <p>Online worldwide</p>
         </div>
       </div>
     </footer>);

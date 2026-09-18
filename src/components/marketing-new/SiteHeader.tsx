@@ -1,15 +1,31 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from "next/link";
 import { AnimatePresence, motion } from 'framer-motion';
 import { MenuIcon, XIcon } from 'lucide-react';
 import { navItems } from '@/lib/marketing-data/navigation';
 import { LoginModal } from '@/components/auth/LoginModal';
+import { RegisterModal } from '@/components/auth/RegisterModal';
+import { useSearchParams } from 'next/navigation';
 
-export function SiteHeader() {
+import Image from 'next/image';
+
+function SiteHeaderInner() {
+  const searchParams = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(searchParams.get('login') === 'true');
+  const [registerModalOpen, setRegisterModalOpen] = useState(searchParams.get('register') === 'true');
+
+  const openLogin = () => {
+    setRegisterModalOpen(false);
+    setLoginModalOpen(true);
+  };
+
+  const openRegister = () => {
+    setLoginModalOpen(false);
+    setRegisterModalOpen(true);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -29,19 +45,7 @@ export function SiteHeader() {
           href="#top"
           className="group flex items-center gap-3 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-4 focus-visible:ring-offset-cream">
           
-          <span className="flex h-9 w-9 items-center justify-center rounded-[3px] bg-marketing-forest">
-            <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
-              <path
-                d="M13.4 3c1.9 1.7 2.5 3.6 1.9 5.6-.5 1.6-1.7 3.2-2.7 4.6-1 1.4-1.7 2.5-1.7 3.7 0 1.3.8 2.2 1.9 2.2 1 0 1.8-.7 1.8-1.7 0-.8-.5-1.4-1.2-1.6"
-                fill="none"
-                stroke="#B8863B"
-                strokeWidth="1.6"
-                strokeLinecap="round" />
-              
-              <path d="M9.2 9.6c3.6-1.3 6.2-2.6 8.4-4.2" fill="none" stroke="#FBF7EF" strokeWidth="1.3" strokeLinecap="round" />
-              <path d="M9.2 13.4c3.6-1.3 6.2-2.6 8.4-4.2" fill="none" stroke="#FBF7EF" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-          </span>
+          <Image src="/logo.jpg" alt="TLMI Logo" width={36} height={36} className="rounded-sm object-cover" />
           <span className="flex items-baseline gap-3">
             <span className="font-marketing-display text-xl font-semibold tracking-tightest text-marketing-ink">TLMI</span>
             <span className="hidden h-4 w-px bg-marketing-rule lg:block" aria-hidden="true" />
@@ -67,17 +71,17 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-4">
           <button
-            onClick={() => setLoginModalOpen(true)}
+            onClick={openLogin}
             className="hidden rounded-sm px-2 py-2 text-[14px] text-marketing-bark transition-colors duration-150 ease-out hover:text-marketing-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-forest sm:block">
             
             Log in
           </button>
-          <Link
-            href="/register"
+          <button
+            onClick={openRegister}
             className="whitespace-nowrap rounded-[4px] bg-marketing-forest px-4 py-2.5 text-[14px] font-medium text-marketing-cream transition-colors duration-150 ease-out hover:bg-marketing-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2 focus-visible:ring-offset-cream">
             
             Start learning
-          </Link>
+          </button>
           <button
             type="button"
             onClick={() => setMobileOpen((open) => !open)}
@@ -111,7 +115,7 @@ export function SiteHeader() {
                   {item.label}
                 </Link>
             )}
-              <button onClick={() => { setMobileOpen(false); setLoginModalOpen(true); }} className="py-3.5 text-[14px] text-marketing-bark sm:hidden text-left">
+              <button onClick={() => { setMobileOpen(false); openLogin(); }} className="py-3.5 text-[14px] text-marketing-bark sm:hidden text-left">
                 Log in
               </button>
             </nav>
@@ -119,6 +123,16 @@ export function SiteHeader() {
         }
       </AnimatePresence>
 
-      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
-    </header>);
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} onSwitchToRegister={openRegister} />
+      <RegisterModal open={registerModalOpen} onOpenChange={setRegisterModalOpen} onSwitchToLogin={openLogin} />
+    </header>
+  );
+}
+
+export function SiteHeader() {
+  return (
+    <Suspense fallback={<div className="h-[73px] w-full bg-marketing-cream"></div>}>
+      <SiteHeaderInner />
+    </Suspense>
+  );
 }
