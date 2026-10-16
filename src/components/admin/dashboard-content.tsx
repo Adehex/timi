@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowDownRight, ArrowUpRight, CalendarPlus, ChevronRight, Download, UserPlus } from "lucide-react";
 import { AdminButton, PageHeader, Panel } from "@/components/admin/admin-ui";
 import { attentionItems, enrollmentSeries, recentRegistrations, todaySchedule, initials } from "@/components/admin/admin-data";
-
+import { EnrollStudentModal } from "@/components/admin/EnrollStudentModal";
+import { ScheduleClassModal } from "@/components/admin/ScheduleClassModal";
 type DashboardStats = {
   totalStudents: number;
   activeStudents: number;
@@ -63,5 +65,29 @@ function RegistrationsList() {
 }
 
 export function DashboardContent({ stats }: { stats: DashboardStats }) {
-  return <div className="space-y-6"><PageHeader eyebrow="Term 1 · 2026/27" title="Academy overview" subtitle="Enrollment health, tuition collected, and everything waiting on you today."><AdminButton icon={<Download className="h-4 w-4" aria-hidden="true" />}>Export</AdminButton><AdminButton icon={<CalendarPlus className="h-4 w-4" aria-hidden="true" />}>Schedule class</AdminButton><AdminButton variant="primary" icon={<UserPlus className="h-4 w-4" aria-hidden="true" />}>Enroll student</AdminButton></PageHeader><HeadlineMetrics stats={stats} /><div className="grid grid-cols-1 gap-6 xl:grid-cols-3"><div className="xl:col-span-2"><EnrollmentChart /></div><AttentionQueue /></div><div className="grid grid-cols-1 gap-6 lg:grid-cols-5"><div className="lg:col-span-3"><ScheduleTimeline /></div><div className="lg:col-span-2"><RegistrationsList /></div></div></div>;
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  
+  return (
+    <>
+      <div className="space-y-6">
+        <PageHeader eyebrow="Term 1 · 2026/27" title="Academy overview" subtitle="Enrollment health, tuition collected, and everything waiting on you today.">
+          <AdminButton icon={<Download className="h-4 w-4" aria-hidden="true" />} onClick={() => window.location.href = '/api/admin/export/students'}>Export</AdminButton>
+          <AdminButton icon={<CalendarPlus className="h-4 w-4" aria-hidden="true" />} onClick={() => setIsScheduleModalOpen(true)}>Schedule class</AdminButton>
+          <AdminButton variant="primary" icon={<UserPlus className="h-4 w-4" aria-hidden="true" />} onClick={() => setIsEnrollModalOpen(true)}>Enroll student</AdminButton>
+        </PageHeader>
+        <HeadlineMetrics stats={stats} />
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <div className="xl:col-span-2"><EnrollmentChart /></div>
+          <AttentionQueue />
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-3"><ScheduleTimeline /></div>
+          <div className="lg:col-span-2"><RegistrationsList /></div>
+        </div>
+      </div>
+      <EnrollStudentModal open={isEnrollModalOpen} onOpenChange={setIsEnrollModalOpen} />
+      <ScheduleClassModal open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen} />
+    </>
+  );
 }

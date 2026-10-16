@@ -18,7 +18,7 @@ import { Pool, type QueryResultRow } from "pg";
  */
 
 declare global {
-  var __tlmiPool5: Pool | undefined;
+  var __tlmiPool6: Pool | undefined;
 }
 
 let _pool: Pool | undefined;
@@ -44,14 +44,16 @@ export function getPool() {
       // ignore
     }
 
-    _pool = globalThis.__tlmiPool5 ?? new Pool({
+    const isLocal = connectionString.includes("localhost") || connectionString.includes("127.0.0.1");
+
+    _pool = globalThis.__tlmiPool6 ?? new Pool({
       connectionString: cleanConnectionString,
       max: 10,
       idleTimeoutMillis: 30_000,
-      ssl: { rejectUnauthorized: false },
+      ssl: isLocal ? false : { rejectUnauthorized: false },
     });
     if (process.env.NODE_ENV !== "production") {
-      globalThis.__tlmiPool5 = _pool;
+      globalThis.__tlmiPool6 = _pool;
     }
   }
   return _pool;
