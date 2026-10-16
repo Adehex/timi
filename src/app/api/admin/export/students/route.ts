@@ -8,7 +8,15 @@ export async function GET() {
     await requireRole(["ADMIN", "SUPER_ADMIN"]);
 
     // Fetch student profiles with user email
-    const result = await query(`
+    interface StudentExportRow {
+      firstName: string;
+      lastName: string;
+      email: string;
+      status: string;
+      createdAt: string | Date;
+    }
+
+    const students = await query<StudentExportRow>(`
       SELECT 
         p."firstName",
         p."lastName",
@@ -23,7 +31,7 @@ export async function GET() {
 
     // Generate CSV string
     const headers = ["First Name", "Last Name", "Email", "Status", "Joined At"];
-    const rows = result.rows.map((row) => [
+    const rows = students.map((row: StudentExportRow) => [
       row.firstName,
       row.lastName,
       row.email,
@@ -33,7 +41,7 @@ export async function GET() {
 
     const csvContent = [
       headers.join(","),
-      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      ...rows.map((row: (string | number)[]) => row.map((cell: string | number) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
     ].join("\n");
 
     return new NextResponse(csvContent, {
