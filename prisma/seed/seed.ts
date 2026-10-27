@@ -11,14 +11,36 @@ import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const rawConnectionString = process.env.SEED_DATABASE_URL || process.env.DATABASE_URL || "";
+let cleanConnectionString = rawConnectionString;
+try {
+  const url = new URL(rawConnectionString);
+  url.searchParams.delete("sslmode");
+  url.searchParams.delete("ssl");
+  cleanConnectionString = url.toString();
+} catch {
+  // ignore
+}
+const isLocal = rawConnectionString.includes("localhost") || rawConnectionString.includes("127.0.0.1");
 
+const pool = new Pool({
+  connectionString: cleanConnectionString,
+  ssl: isLocal ? false : { rejectUnauthorized: false },
+});
+
+const hashCache = new Map<string, string>();
 async function hash(password: string) {
-  return bcrypt.hash(password, 12);
+  const cached = hashCache.get(password);
+  if (cached) return cached;
+  const h = await bcrypt.hash(password, 12);
+  hashCache.set(password, h);
+  return h;
 }
 
 async function main() {
+  await hash("Password123");
   const client = await pool.connect();
+  client.on("error", (err) => console.error("PG Client error:", err.message));
   try {
     await client.query("BEGIN");
 

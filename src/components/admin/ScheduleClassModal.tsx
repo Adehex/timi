@@ -31,8 +31,8 @@ export function ScheduleClassModal({ open, onOpenChange }: ScheduleClassModalPro
         getTeachersForDropdown().catch(() => []),
         getCoursesForDropdown().catch(() => []),
       ]).then(([t, c]) => {
-        setTeachers(t);
-        setCourses(c);
+        setTeachers(Array.isArray(t) ? t : []);
+        setCourses(Array.isArray(c) ? c : []);
         setIsLoadingData(false);
       });
     }
@@ -85,7 +85,7 @@ export function ScheduleClassModal({ open, onOpenChange }: ScheduleClassModalPro
                   disabled={isLoadingData}
                 >
                   <option value="">Select teacher...</option>
-                  {teachers.map(t => (
+                  {Array.isArray(teachers) && teachers.map(t => (
                     <option key={t.teacherId} value={t.teacherId}>{t.firstName} {t.lastName}</option>
                   ))}
                 </select>
@@ -115,7 +115,7 @@ export function ScheduleClassModal({ open, onOpenChange }: ScheduleClassModalPro
                 disabled={isLoadingData}
               >
                 <option value="">None</option>
-                {courses.map(c => (
+                {Array.isArray(courses) && courses.map(c => (
                   <option key={c.id} value={c.id}>{c.title}</option>
                 ))}
               </select>

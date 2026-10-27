@@ -28,12 +28,19 @@ const PROTECTED_PREFIXES = [
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Allow the admin login page to be publicly accessible
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   if (!isProtected) return NextResponse.next();
 
   const hasSessionCookie = request.cookies.has(COOKIE_NAME);
   if (!hasSessionCookie) {
-    const loginUrl = new URL("/login", request.url);
+    const redirectTarget = pathname.startsWith("/admin") ? "/admin/login" : "/login";
+    const loginUrl = new URL(redirectTarget, request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }

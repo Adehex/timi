@@ -23,6 +23,17 @@ export async function requireRole(allowedRoles: Role[]): Promise<User> {
   return user;
 }
 
+export async function requireAdmin(): Promise<User> {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/admin/login");
+  }
+  if (!isStaffRole(user.role)) {
+    redirect("/unauthorized");
+  }
+  return user;
+}
+
 export function isStaffRole(role: Role): boolean {
   return role === "ADMIN" || role === "SUPER_ADMIN" || role === "CONTENT_MANAGER";
 }
